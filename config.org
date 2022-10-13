@@ -1,0 +1,508 @@
+* Default Config
+** Lexical Binding
+emacs 相关魔法头
+#+begin_src emacs-lisp
+;; config.el -*- lexical-binding: t -*-
+#+end_src
+
+* Package Manager
+** Straight
+[[https:github.com/radian-software/straight.el][straight.el]] 是 package.el 的现代替代
+#+begin_src emacs-lisp
+(defvar bootstrap-version)
+(let ((bootstrap-file
+       (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
+      (bootstrap-version 6))
+  (unless (file-exists-p bootstrap-file)
+    (with-current-buffer
+        (url-retrieve-synchronously
+         "https://raw.githubusercontent.com/radian-software/straight.el/develop/install.el"
+         'silent 'inhibit-cookies)
+      (goto-char (point-max))
+      (eval-print-last-sexp)))
+  (load bootstrap-file nil 'nomessage))
+#+end_src
+
+设置 github 仓库的默认拉取层级
+#+begin_src emacs-lisp
+(setq straight-vc-git-default-clone-depth 1)
+#+end_src
+
+** Use Package
+[[https://github.com/jwiegley/use-package][use-package]] 使用更简洁的语法配置 package。配合 ~straight.el~ 使用。
+#+begin_src emacs-lisp
+  (straight-use-package 'use-package)
+  (setq straight-use-package-by-default t)
+  ;; 设置自动下载
+  (setq use-package-always-ensure t)
+#+end_src
+
+#+begin_src emacs-lisp
+  (use-package exec-path-from-shell
+  :when (or (memq window-system '(mac ns x))
+	    (unless (memq system-type '(ms-dos windows-nt))
+	      (daemonp)))
+  :custom (exec-path-from-shell-arguments '("-l"))
+  :config
+  (dolist (var '("GPG_AGENT_INFO" "LANG" "LC_CTYPE"))
+    (add-to-list 'exec-path-from-shell-variables var))
+  (exec-path-from-shell-initialize))
+
+#+end_src
+* UI/UX
+** Emacs 配置
+去除无用警告
+https://emacs.stackexchange.com/a/20039/19518
+#+begin_src emacs-lisp
+(defun filter-command-error-function (data context caller)
+  "Ignore the buffer-read-only, beginning-of-line, end-of-line, beginning-of-buffer, end-of-buffer signals; pass the rest to the default handler."
+  (when (not (memq (car data) '(buffer-read-only
+                                mark-inactive
+                                beginning-of-line
+                                end-of-line
+                                beginning-of-buffer
+                                end-of-buffer)))
+    (command-error-default-function data context caller)))
+
+(setq command-error-function #'filter-command-error-function)
+#+end_src
+
+** 扩展/mode 修改
+*** Color Theme
+默认使用 [[https://github.com/doomemacs/themes][doom-themes]]。
+#+begin_src emacs-lisp
+(use-package doom-themes
+  :ensure t
+  :config
+  ;; Global settings (defaults)
+  (setq doom-themes-enable-bold t    ; if nil, bold is universally disabled
+        doom-themes-enable-italic t) ; if nil, italics is universally disabled
+  (load-theme 'doom-one t)
+
+  ;; Enable flashing mode-line on errors
+  (doom-themes-visual-bell-config)
+  ;; Enable custom neotree theme (all-the-icons must be installed!)
+  (doom-themes-neotree-config)
+  ;; or for treemacs users
+  (setq doom-themes-treemacs-theme "doom-atom") ; use "doom-colors" for less minimal icon theme
+  (doom-themes-treemacs-config)
+  ;; Corrects (and improves) org-mode's native fontification.
+  (doom-themes-org-config))
+#+end_src
+
+状态栏配置
+#+begin_src emacs-lisp
+;;modeline上显示我的所有的按键和执行的命令
+(use-package keycast)
+(add-to-list 'global-mode-string '("" keycast-mode-line))
+(keycast-mode t)
+#+end_src
+
+[[https://github.com/seagle0128/doom-modeline][doom-modeline]] 更现代化的状态栏
+#+begin_src emacs-lisp
+  (use-package doom-modeline
+  :ensure t
+  :hook (after-init . doom-modeline-mode))
+#+end_src
+
+*** Dired
+
+[[https://github.com/jtbm37/all-the-icons-dired][all-the-icons-dired]] 提供图标
+#+begin_src emacs-lisp
+    (use-package all-the-icons-dired
+      :hook (dired-mode . all-the-icons-dired-mode))
+#+end_src
+
+[[https://github.com/Fuco1/dired-hacks#dired-subtree][dired-subtree]] 使用 ~Tab~ 进行子树展示
+#+begin_src emacs-lisp
+  (use-package dired-subtree
+  :after dired
+  :bind
+  (:map  dired-mode-map
+   ("<tab>"     . dired-subtree-toggle)
+   ("<backtab>" . dired-subtree-cycle)))
+#+end_src
+
+* Completion
+
+[[https://github.com/oantolin/orderless][orderless]] 提供（模糊搜索？）的功能
+#+begin_src emacs-lisp
+  (use-package orderless
+  :ensure t
+  :custom
+  (completion-styles '(orderless basic))
+  (completion-category-overrides '((file (styles basic partial-completion)))))
+#+end_src
+
+[[https://github.com/minad/vertico][vertico]] minibuffer 补全/增强
+#+begin_src emacs-lisp
+  (use-package vertico
+  :custom
+  (vertico-cycle t)
+  (enable-recursive-minibuffers t)
+  :config (vertico-mode))
+#+end_src
+
+[[https://github.com/minad/marginalia][marginalia]] 增强 minibuffer 中命令/参数/函数的描述性
+#+begin_src emacs-lisp
+  (use-package marginalia
+  ;; Either bind `marginalia-cycle' globally or only in the minibuffer
+  :bind (("M-A" . marginalia-cycle)
+         :map minibuffer-local-map
+         ("M-A" . marginalia-cycle))
+
+  ;; The :init configuration is always executed (Not lazy!)
+  :init
+
+  ;; Must be in the :init section of use-package such that the mode gets
+  ;; enabled right away. Note that this forces loading the package.
+  (marginalia-mode))
+#+end_src
+
+[[https://github.com/oantolin/embark][embark]] 用于查看/修改光标下对象的属性
+#+begin_src emacs-lisp
+  (use-package embark
+  :ensure t
+
+  :bind
+  (("C-." . embark-act)         ;; pick some comfortable binding
+   ("C-;" . embark-dwim)        ;; good alternative: M-.
+   ("C-h B" . embark-bindings)) ;; alternative for `describe-bindings'
+
+  :init
+
+  ;; Optionally replace the key help with a completing-read interface
+  (setq prefix-help-command #'embark-prefix-help-command)
+
+  :config
+
+  ;; Hide the mode line of the Embark live/completions buffers
+  (add-to-list 'display-buffer-alist
+               '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
+                 nil
+                 (window-parameters (mode-line-format . none)))))
+#+end_src
+
+[[https://github.com/minad/consult/][consult]] 搜索/跳转增强
+#+begin_src emacs-lisp
+    (use-package consult
+      :bind
+	(("C-s" . consult-line)
+	 ("C-x b" . consult-buffer)))
+
+    (use-package recentf
+      :init (recentf-mode 1))
+#+end_src
+
+#+begin_src emacs-lisp
+ (use-package corfu
+  :custom
+  (corfu-auto t)
+  (corfu-max-width 100)
+  (corfu-auto-delay 0.15)
+  (corfu-auto-prefix 1)
+  (corfu-preview-current nil)
+  :hook (eshell-mode . (lambda () (setq-local corfu-auto nil)))
+  :init
+  (global-corfu-mode))
+
+(use-package cape
+  :after corfu
+  :bind (("C-c p p" . completion-at-point)
+         ("C-c p t" . complete-tag)
+         ("C-c p d" . cape-dabbrev)
+         ("C-c p f" . cape-file)
+         ("C-c p s" . cape-symbol)
+         ("C-c p a" . cape-abbrev)
+         ("C-c p i" . cape-ispell)
+         ("C-c p l" . cape-line)
+         ("C-c p w" . cape-dict))
+  :init
+  (add-to-list 'completion-at-point-functions #'cape-file))
+
+(use-package kind-icon
+  :after corfu
+  :custom
+  (kind-icon-default-face 'corfu-default)
+  :config
+  (add-to-list 'corfu-margin-formatters #'kind-icon-margin-formatter))
+#+end_src
+
+* Window Management
+** Session
+[[https://github.com/iqbalansari/restart-emacs][restart-emacs]] 帮助快捷重启
+#+begin_src emacs-lisp
+  (use-package restart-emacs)
+#+end_src
+
+** Window
+[[https://github.com/emacsorphanage/zoom-window][zoom-window]] 用于临时全屏窗口
+#+begin_src emacs-lisp
+  (use-package zoom-window
+  :bind ("C-x C-z" . zoom-window-zoom)
+  :custom
+  (zoom-window-mode-line-color "DarkGreen"))
+#+end_src
+
+* TODO File Edit
+*需要结合 emacs 本身配置和插件，这部分应该要长期积累*
+
+** Emacs 设置
+开启自动配对符号
+#+begin_src emacs-lisp
+  (electric-pair-mode 1)
+#+end_src
+
+自动删除光标下文字
+#+begin_src emacs-lisp
+  (delete-selection-mode 1)
+#+end_src
+
+高亮当前行
+#+begin_src emacs-lisp
+  (global-hl-line-mode 1)
+#+end_src
+** 扩展/mode 修改
+[[https://codeberg.org/ideasman42/emacs-undo-fu][undo-fu]] 提供线性撤销功能
+#+begin_src emacs-lisp
+  (use-package undo-fu
+  :bind
+  (("s-z" . undo-fu-only-undo)
+   ("s-Z" . undo-fu-only-redo))
+  :custom
+  (undo-fu-allow-undo-in-region t))
+#+end_src
+
+[[https://codeberg.org/ideasman42/emacs-undo-fu-session][undo-fu-session]] 用于增强 ~undo-fu~
+#+begin_src emacs-lisp
+  (use-package undo-fu-session
+  :config
+  (setq undo-fu-session-incompatible-files '("/COMMIT_EDITMSG\\'" "/git-rebase-todo\\'"))
+  (global-undo-fu-session-mode))
+#+end_src
+
+[[https://github.com/casouri/undo-hl][undo-hl]] 视觉化撤销操作
+#+begin_src emacs-lisp
+  (use-package undo-hl
+  :straight (undo-hl :type git :host github :repo "casouri/undo-hl")
+  :hook
+  (text-mode . undo-hl-mode))
+#+end_src
+
+[[https://github.com/Fanael/rainbow-delimiters][rainbow-delimiters]] 彩色显示对称符号
+#+begin_src emacs-lisp
+(use-package rainbow-delimiters
+  :hook
+  ((prog-mode . rainbow-delimiters-mode)
+   (latex-mode . rainbow-delimiters-mode))
+  :config
+  (set-face-attribute 'rainbow-delimiters-unmatched-face nil
+                      :foreground 'unspecified
+                      :inherit 'error
+                      :strike-through t))
+#+end_src
+
+[[https://github.com/bbatsov/super-save][super-save]] 增强自动保存
+#+begin_src emacs-lisp
+  (use-package super-save
+  :ensure t
+  :config
+  (super-save-mode +1))
+#+end_src
+
+[[https://github.com/magnars/multiple-cursors.el][multiple-cursors]] 顾名思义，提供类似 vim 的列操作功能
+#+begin_src emacs-lisp
+  (use-package multiple-cursors
+  :bind
+   (("s-d" . mc/mark-next-like-this)
+    ("s-D" . mc/mark-all-like-this)
+    :map mc/keymap
+     ("<return>" . nil))
+  :custom
+  ;; Make mc slicent instead of asking almost every action.
+  (mc/always-run-for-all t))
+#+end_src
+
+[[https://github.com/joaotavora/yasnippet][yasnippet]] 提供代码片段展开功能
+#+begin_src emacs-lisp
+  (use-package yasnippet
+  :diminish yas-minor-mode
+  :hook (after-init . yas-global-mode))
+#+end_src
+
+[[https://github.com/AndreaCrotti/yasnippet-snippets][yasnippet-snippets]] 提供常用 snippets
+#+begin_src emacs-lisp
+  (use-package yasnippet-snippets)
+#+end_src
+
+* Org Mode
+org-mode 作为最常用的 mode，放到一级标题下提升重要性
+
+使用最新 org 版本
+#+begin_src emacs-lisp
+  (use-package org)
+
+(use-package org-contrib)
+#+end_src
+
+禁用左尖括号配对，方便代码片段插入
+#+begin_src emacs-lisp
+  ;; 禁用左尖括号
+(setq electric-pair-inhibit-predicate
+      `(lambda (c)
+	 (if (char-equal c ?\<) t (,electric-pair-inhibit-predicate c))))
+#+end_src
+
+使用 return 打开链接
+#+begin_src emacs-lisp
+  (setq org-return-follows-link t)
+#+end_src
+
+[[https://github.com/awth13/org-appear][org-appear]] 使渲染过的样式重新转为原始代码，方便编辑
+#+begin_src emacs-lisp
+  (use-package org-appear
+    :hook
+    (org-mode . org-appear-mode)
+    :config
+    ;; 设置总是展开
+    (setq org-appear-trigger 'always)
+    :custom
+    (org-appear-delay 0)
+    (org-appear-autolinks t)
+    (org-appear-autoentities t)
+    (org-appear-autokeywords t)
+    (org-appear-autosubmarkers t))
+#+end_src
+
+[[https://github.com/minad/org-modern][org-modern]] 更现代化的 org 文件展示
+#+begin_src emacs-lisp
+(use-package org-modern
+  :hook
+  (org-mode . org-modern-mode)
+  :custom
+  (org-modern-star ["›"] )
+  (org-modern-hide-stars nil)
+  ;; Use valign instead
+  (org-modern-table nil))
+#+end_src
+
+[[https://github.com/casouri/valign][valign]] 像素级对齐中英文混编的表格
+#+begin_src emacs-lisp
+ (use-package valign
+  :hook
+  ;; FIX: Performance is lack, cause slow movement.
+  ;; Waiting for the author to rewrite the package https://github.com/casouri/valign/issues/29
+  ((markdown-mode org-mode) . valign-mode)
+  :config
+  (setq valign-fancy-bar 1))
+#+end_src
+
+* Markdown
+*markdown 作为主流，还是和 org-mode 一个待遇吧*
+
+[[https://github.com/jrblevin/markdown-mode][markdown-mode]] 提供 markdown 支持
+#+begin_src emacs-lisp
+(use-package markdown-mode
+  :commands (markdown-mode gfm-mode)
+  :mode (("README\\.md\\'" . gfm-mode)
+         ("\\.md\\'" . markdown-mode)
+         ("\\.markdown\\'" . markdown-mode))
+  :init (setq markdown-command "multimarkdown"))
+#+end_src
+
+* YAML
+*部分应用会使用 yaml 作为配置文件*
+
+#+begin_src emacs-lisp
+(use-package yaml-mode
+  :mode
+  (("\\.yaml\\'" . yaml-mode)
+   ("\\.yml\\'" . yaml-mode)))
+#+end_src
+
+* JSON
+*方便查看 json，方便甩锅*
+
+#+begin_src emacs-lisp
+(use-package json-mode
+  :defer t)
+#+end_src
+
+* Version Control
+[[https://github.com/magit/magit][magit]] emacs 下 git 增强，应该会有用吧。。。
+#+begin_src emacs-lisp
+(use-package magit
+  :bind
+  (("s-k" . magit)
+   :map transient-base-map
+   ("<escape>" . transient-quit-one))
+  :custom
+  (magit-diff-refine-hunk t)
+  (magit-save-repository-buffers 'dontask)
+  ;; Disable ulgy bitmap in fringe in magit mode.
+  (magit-section-visibility-indicator nil)
+  :config
+  ;; https://manuel-uberti.github.io/emacs/2018/02/17/magit-bury-buffer/
+  (evil-define-key 'normal magit-status-mode-map (kbd "q") 'magit-kill-buffers)
+
+  (defun magit-kill-buffers ()
+    "Restore window configuration and kill all Magit buffers."
+    (interactive)
+    (let ((buffers (magit-mode-get-buffers)))
+      (magit-restore-window-configuration)
+      (mapc #'kill-buffer buffers))))
+#+end_src
+
+[[https://github.com/magit/git-modes][git-mode]] 方便查看 git 配置文件
+#+begin_src emas-lisp
+(use-package git-modes
+  :defer t)
+#+end_src
+
+* Shell
+*你都用 emacs 了，搞个终端不过分吧*
+
+[[https://github.com/akermu/emacs-libvterm][vterm]] 提供（近乎）全功能的终端
+#+begin_src emacs-lisp
+(use-package vterm
+  :bind
+  (:map vterm-mode-map
+   ("s-k"           . vterm-clear)
+   ("<s-left>"      . vterm-send-C-a)
+   ("<s-right>"     . vterm-send-C-e)
+   ("<s-backspace>" . vterm-send-C-u)
+   ("C-c"           . vterm-send-C-c))
+  :custom
+  (vterm-always-compile-module t)
+  :config
+  ;; FIX: Close vterm buffer without confriming.
+  (setq kill-buffer-query-functions nil))
+#+end_src
+
+[[https://github.com/jixiuf/vterm-toggle][vterm-toggle]] 方便 vterm 切换
+#+begin_src emacs-lisp
+(use-package vterm-toggle
+  :bind
+  (("C-`"        . vterm-toggle)
+   :map vterm-mode-map
+   ("<C-return>" . vterm-toggle-insert-cd))
+  :config
+  ;; Display vterm at bottom.
+  (add-to-list 'display-buffer-alist
+               '((lambda(bufname _) (with-current-buffer bufname
+                                      (or (equal major-mode 'vterm-mode)
+                                          (equal bufname vterm-buffer-name))))
+                 (display-buffer-reuse-window display-buffer-in-side-window)
+                 (side . bottom)
+                 (dedicated . t)
+                 (reusable-frames . visible)
+                 (window-height . 0.3))))
+#+end_src
+
+* Chinese
+*优化中文体验*
+
+[[https://github.com/xuchunyang/pinyin-search.el][pinyin-search]] 使用拼音首字母搜索
+#+begin_src emacs-lisp
+  (use-package pinyin-search)
+#+end_src

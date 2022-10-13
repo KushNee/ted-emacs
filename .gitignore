@@ -1,0 +1,8 @@
+/.cache/
+/auto-save-list/
+*~
+/config.el
+/recentf
+/straight/
+/transient/
+/undo-fu-session/
