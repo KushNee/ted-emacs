@@ -125,6 +125,12 @@ https://emacs.stackexchange.com/a/20039/19518
    ("<backtab>" . dired-subtree-cycle)))
 #+end_src
 
+[[https://github.com/justbur/emacs-which-key][which-key]] 提供按键提示
+#+begin_src emacs-lisp
+    (use-package which-key
+      :hook (after-init . which-key-mode))
+#+end_src
+
 * Completion
 
 [[https://github.com/oantolin/orderless][orderless]] 提供（模糊搜索？）的功能
