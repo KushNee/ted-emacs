@@ -37,6 +37,7 @@ emacs 相关魔法头
   (setq use-package-always-ensure t)
 #+end_src
 
+使 emacs 获取 ~$PATH~
 #+begin_src emacs-lisp
   (use-package exec-path-from-shell
   :when (or (memq window-system '(mac ns x))
@@ -49,6 +50,7 @@ emacs 相关魔法头
   (exec-path-from-shell-initialize))
 
 #+end_src
+
 * UI/UX
 ** Emacs 配置
 去除无用警告
@@ -338,11 +340,26 @@ https://emacs.stackexchange.com/a/20039/19518
 * Org Mode
 org-mode 作为最常用的 mode，放到一级标题下提升重要性
 
-使用最新 org 版本
+全局设置 agenda、capture 根目录
 #+begin_src emacs-lisp
-  (use-package org)
+  (setq org-directory "~/Syncthings/org")
+#+end_src
 
-(use-package org-contrib)
+开启动态标题计数
+#+begin_src emacs-lisp
+  (setq org-startup-numerated t)
+#+end_src
+
+开启缩进
+#+begin_src emacs-lisp
+  (org-indent-mode)
+#+end_src
+org mode 的插件
+#+begin_src emacs-lisp
+  (use-package org
+    :straight (:type built-in))
+  
+    (use-package org-contrib)
 #+end_src
 
 禁用左尖括号配对，方便代码片段插入
@@ -395,6 +412,45 @@ org-mode 作为最常用的 mode，放到一级标题下提升重要性
   ((markdown-mode org-mode) . valign-mode)
   :config
   (setq valign-fancy-bar 1))
+#+end_src
+
+[[https://github.com/DarthFennec/highlight-indent-guides][highlight-indent-guides]] 提供对块的竖线分隔
+#+begin_src emacs-lisp
+	  (use-package highlight-indent-guides
+	    :hook (org-mode . highlight-indent-guides-mode)
+	    :config
+	    (setq highlight-indent-guides-method 'bitmap)
+	    (setq highlight-indent-guides-auto-character-face-perc 100))
+#+end_src
+** org todo
+#+begin_src emacs-lisp
+  (setq org-todo-keywords
+      (quote ((sequence "TODO(t)" "STARTED(s)" "|" "DONE(d!/!)")
+	      (sequence "WAITING(w@/!)" "SOMEDAY(S)" "|" "CANCELLED(c@/!)" "MEETING(m)" "PHONE(p)"))))
+
+(require 'org-checklist)
+;; need repeat task and properties
+(setq org-log-done t)
+(setq org-log-into-drawer t)
+#+end_src
+
+** org agenda
+#+begin_src emacs-lisp
+    ;; C-c C-s schedule
+  ;; C-c C-d deadline
+  (global-set-key (kbd "C-c a") 'org-agenda)
+  (setq org-agenda-files '("gtd.org"))
+  (setq org-agenda-span 'day)
+#+end_src
+
+** org capture
+#+begin_src emacs-lisp
+  (setq org-capture-templates
+      '(("t" "Todo" entry (file "gtd.org")
+	 "* TODO [#B] %?\n  %i\n %U"
+	 :empty-lines 1)))
+
+(global-set-key (kbd "C-c x") 'org-capture)
 #+end_src
 
 * Markdown
@@ -496,7 +552,7 @@ org-mode 作为最常用的 mode，放到一级标题下提升重要性
                  (side . bottom)
                  (dedicated . t)
                  (reusable-frames . visible)
-                 (window-height . 0.3))))
+                   (window-height . 0.3))))
 #+end_src
 
 * Chinese

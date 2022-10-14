@@ -33,6 +33,10 @@
 ;; we must prevent Emacs from doing it early!
 (setq package-enable-at-startup nil)
 (setq package-quickstart t)
+(setq package-archives '(("gnu"   . "http://mirrors.tuna.tsinghua.edu.cn/elpa/gnu/")
+                         ("melpa" . "http://mirrors.tuna.tsinghua.edu.cn/elpa/melpa/")
+			 ("nongnu" . "http://mirrors.tuna.tsinghua.edu.cn/elpa/nongnu/")))
+(package-initialize) ;; You might already have this line
 
 (setq inhibit-startup-screen t)
 (setq initial-scratch-message nil)
