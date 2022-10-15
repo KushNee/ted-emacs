@@ -360,6 +360,7 @@ org-mode 作为最常用的 mode，放到一级标题下提升重要性
 #+begin_src emacs-lisp
   (org-indent-mode)
 #+end_src
+
 org mode 的插件
 #+begin_src emacs-lisp
   (use-package org
@@ -415,7 +416,7 @@ org mode 的插件
   :hook
   ;; FIX: Performance is lack, cause slow movement.
   ;; Waiting for the author to rewrite the package https://github.com/casouri/valign/issues/29
-  ((markdown-mode org-mode) . valign-mode)
+  ((markdown-mode org-mode org-agenda-mode) . valign-mode)
   :config
   (setq valign-fancy-bar 1))
 #+end_src
@@ -425,7 +426,7 @@ org mode 的插件
 	  (use-package highlight-indent-guides
 	    :hook (org-mode . highlight-indent-guides-mode)
 	    :config
-	    (setq highlight-indent-guides-method 'bitmap)
+	    (setq highlight-indent-guides-method 'character)
 	    (setq highlight-indent-guides-auto-character-face-perc 100))
 #+end_src
 ** org todo
@@ -453,7 +454,7 @@ org mode 的插件
 #+begin_src emacs-lisp
   (setq org-capture-templates
       '(("t" "Todo" entry (file "gtd.org")
-	 "* TODO [#B] %?\n  %i\n %U"
+	 "* TODO %?\n  %i\n %U"
 	 :empty-lines 1)))
 
 (global-set-key (kbd "C-c x") 'org-capture)
@@ -519,46 +520,6 @@ org mode 的插件
 #+begin_src emas-lisp
 (use-package git-modes
   :defer t)
-#+end_src
-
-* Shell
-*你都用 emacs 了，搞个终端不过分吧*
-
-[[https://github.com/akermu/emacs-libvterm][vterm]] 提供（近乎）全功能的终端
-#+begin_src emacs-lisp
-(use-package vterm
-  :bind
-  (:map vterm-mode-map
-   ("s-k"           . vterm-clear)
-   ("<s-left>"      . vterm-send-C-a)
-   ("<s-right>"     . vterm-send-C-e)
-   ("<s-backspace>" . vterm-send-C-u)
-   ("C-c"           . vterm-send-C-c))
-  :custom
-  (vterm-always-compile-module t)
-  :config
-  ;; FIX: Close vterm buffer without confriming.
-  (setq kill-buffer-query-functions nil))
-#+end_src
-
-[[https://github.com/jixiuf/vterm-toggle][vterm-toggle]] 方便 vterm 切换
-#+begin_src emacs-lisp
-(use-package vterm-toggle
-  :bind
-  (("C-`"        . vterm-toggle)
-   :map vterm-mode-map
-   ("<C-return>" . vterm-toggle-insert-cd))
-  :config
-  ;; Display vterm at bottom.
-  (add-to-list 'display-buffer-alist
-               '((lambda(bufname _) (with-current-buffer bufname
-                                      (or (equal major-mode 'vterm-mode)
-                                          (equal bufname vterm-buffer-name))))
-                 (display-buffer-reuse-window display-buffer-in-side-window)
-                 (side . bottom)
-                 (dedicated . t)
-                 (reusable-frames . visible)
-                   (window-height . 0.3))))
 #+end_src
 
 * Chinese
