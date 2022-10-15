@@ -2,7 +2,7 @@
 ** Lexical Binding
 emacs 相关魔法头
 #+begin_src emacs-lisp
-;; config.el -*- lexical-binding: t -*-
+  ;; config.el -*- lexical-binding: t -*-
 #+end_src
 
 * Package Manager
@@ -90,14 +90,6 @@ https://emacs.stackexchange.com/a/20039/19518
   (doom-themes-treemacs-config)
   ;; Corrects (and improves) org-mode's native fontification.
   (doom-themes-org-config))
-#+end_src
-
-状态栏配置
-#+begin_src emacs-lisp
-;;modeline上显示我的所有的按键和执行的命令
-(use-package keycast)
-(add-to-list 'global-mode-string '("" keycast-mode-line))
-(keycast-mode t)
 #+end_src
 
 [[https://github.com/seagle0128/doom-modeline][doom-modeline]] 更现代化的状态栏
@@ -452,14 +444,36 @@ org mode 的插件
 
 ** org capture
 #+begin_src emacs-lisp
-  (setq org-capture-templates
-      '(("t" "Todo" entry (file "gtd.org")
-	 "* TODO %?\n  %i\n %U"
-	 :empty-lines 1)))
+    (setq org-capture-templates
+	'(("t" "Todo" entry (file "gtd.org")
+	   "* TODO %?\n  %i\n %U"
+	   :empty-lines 1)
+	  ("j" "Journal" entry (file+olp+datetree "journal.org")
+	   "* %^{Title} %?\n  %U\n"
+	   :empty-lines 1)
+	  ("i" "Idea" entry (file "idea.org")
+	   "*  %^{Title} %?\n %U\n")
+	  :empty-lines 1))
 
-(global-set-key (kbd "C-c x") 'org-capture)
+  (global-set-key (kbd "C-c x") 'org-capture)
 #+end_src
 
+** org roam
+#+begin_src emacs-lisp
+  (use-package org-roam
+  :ensure t
+  :custom
+  (org-roam-directory (file-truename (string-join (cons org-directory '("roam")) "/")))
+  :bind (("C-c n l" . org-roam-buffer-toggle)
+         ("C-c n f" . org-roam-node-find)
+         ("C-c n g" . org-roam-graph)
+         ("C-c n i" . org-roam-node-insert)
+         ("C-c n c" . org-roam-capture))
+  :config
+  ;; If you're using a vertical completion framework, you might want a more informative completion interface
+  (setq org-roam-node-display-template (concat "${title:*} " (propertize "${tags:10}" 'face 'org-tag)))
+  (org-roam-db-autosync-mode))
+#+end_src
 * Markdown
 *markdown 作为主流，还是和 org-mode 一个待遇吧*
 
@@ -525,7 +539,10 @@ org mode 的插件
 * Chinese
 *优化中文体验*
 
-[[https://github.com/xuchunyang/pinyin-search.el][pinyin-search]] 使用拼音首字母搜索
+使用拼音首字母搜索
 #+begin_src emacs-lisp
-  (use-package pinyin-search)
+  (use-package pinyinlib)
+    (defun completion--regex-pinyin (str)
+    (orderless-regexp (pinyinlib-build-regexp-string str)))
+  (add-to-list 'orderless-matching-styles 'completion--regex-pinyin)
 #+end_src
