@@ -356,8 +356,11 @@ org-mode 作为最常用的 mode，放到一级标题下提升重要性
 org mode 的插件
 #+begin_src emacs-lisp
   (use-package org
-    :straight (:type built-in))
-  
+    :straight (:type built-in)
+    :bind (("C-c b" . org-switchb)
+	   ("C-c c" . org-capture)
+	   ("C-c a" . org-agenda)))
+
     (use-package org-contrib)
 #+end_src
 
@@ -424,7 +427,7 @@ org mode 的插件
 ** org todo
 #+begin_src emacs-lisp
   (setq org-todo-keywords
-      (quote ((sequence "TODO(t)" "STARTED(s)" "|" "DONE(d!/!)")
+      (quote ((sequence "TODO(t)" "DOING(D)" "|" "DONE(d!)")
 	      (sequence "WAITING(w@/!)" "SOMEDAY(S)" "|" "CANCELLED(c@/!)" "MEETING(m)" "PHONE(p)"))))
 
 (require 'org-checklist)
@@ -435,9 +438,6 @@ org mode 的插件
 
 ** org agenda
 #+begin_src emacs-lisp
-    ;; C-c C-s schedule
-  ;; C-c C-d deadline
-  (global-set-key (kbd "C-c a") 'org-agenda)
   (setq org-agenda-files '("gtd.org"))
   (setq org-agenda-span 'day)
 #+end_src
@@ -448,14 +448,12 @@ org mode 的插件
 	'(("t" "Todo" entry (file "gtd.org")
 	   "* TODO %?\n  %i\n %U"
 	   :empty-lines 1)
-	  ("j" "Journal" entry (file+olp+datetree "journal.org")
+	  ("j" "Journal" entry (file+datetree "journal.org")
 	   "* %^{Title} %?\n  %U\n"
 	   :empty-lines 1)
 	  ("i" "Idea" entry (file "idea.org")
-	   "*  %^{Title} %?\n %U\n")
-	  :empty-lines 1))
-
-  (global-set-key (kbd "C-c x") 'org-capture)
+	   "*  %^{Title} %?\n %U\n"
+	  :empty-lines 1)))
 #+end_src
 
 ** org roam
