@@ -258,7 +258,7 @@ https://emacs.stackexchange.com/a/20039/19518
   (electric-pair-mode 1)
 #+end_src
 
-自动删除光标下文字
+高亮等待删除的文字
 #+begin_src emacs-lisp
   (delete-selection-mode 1)
 #+end_src
