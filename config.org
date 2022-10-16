@@ -100,7 +100,6 @@ https://emacs.stackexchange.com/a/20039/19518
 #+end_src
 
 *** Dired
-
 [[https://github.com/jtbm37/all-the-icons-dired][all-the-icons-dired]] 提供图标
 #+begin_src emacs-lisp
     (use-package all-the-icons-dired
@@ -124,7 +123,6 @@ https://emacs.stackexchange.com/a/20039/19518
 #+end_src
 
 * Completion
-
 [[https://github.com/oantolin/orderless][orderless]] 提供（模糊搜索？）的功能
 #+begin_src emacs-lisp
   (use-package orderless
@@ -302,12 +300,16 @@ https://emacs.stackexchange.com/a/20039/19518
                       :strike-through t))
 #+end_src
 
-[[https://github.com/bbatsov/super-save][super-save]] 增强自动保存
+[[https://github.com/manateelazycat/auto-save][auto-save]] 增强自动保存
 #+begin_src emacs-lisp
-  (use-package super-save
-  :ensure t
-  :config
-  (super-save-mode +1))
+  (use-package auto-save
+    :straight (auto-save :type git :host github :repo "manateelazycat/auto-save")
+    :config
+  (auto-save-enable)
+  (setq auto-save-silent t)
+  (setq auto-save-delete-trailing-whitespave t)
+  ;; 关闭自带的自动保存
+  (setq auto-save-default nil))
 #+end_src
 
 [[https://github.com/magnars/multiple-cursors.el][multiple-cursors]] 顾名思义，提供类似 vim 的列操作功能
@@ -341,6 +343,8 @@ org-mode 作为最常用的 mode，放到一级标题下提升重要性
 全局设置 agenda、capture 根目录
 #+begin_src emacs-lisp
   (setq org-directory "~/Syncthings/org")
+  (setq org-files (directory-files-recursively org-directory ".*\.org$"))
+  (setq org-refile-targets '((org-files :maxlevel . 5)))
 #+end_src
 
 开启动态标题计数
@@ -348,9 +352,9 @@ org-mode 作为最常用的 mode，放到一级标题下提升重要性
   (setq org-startup-numerated t)
 #+end_src
 
-开启缩进
+开启缩进模式
 #+begin_src emacs-lisp
-  (org-indent-mode)
+  (setq org-startup-indented t)
 #+end_src
 
 org mode 的插件
@@ -411,7 +415,7 @@ org mode 的插件
   :hook
   ;; FIX: Performance is lack, cause slow movement.
   ;; Waiting for the author to rewrite the package https://github.com/casouri/valign/issues/29
-  ((markdown-mode org-mode org-agenda-mode) . valign-mode)
+  ((markdown-mode org-mode) . valign-mode)
   :config
   (setq valign-fancy-bar 1))
 #+end_src
@@ -427,7 +431,7 @@ org mode 的插件
 ** org todo
 #+begin_src emacs-lisp
   (setq org-todo-keywords
-      (quote ((sequence "TODO(t)" "DOING(D)" "|" "DONE(d!)")
+      (quote ((sequence "TODO(t)" "DOING(D)" "|" "DONE(d!/!)")
 	      (sequence "WAITING(w@/!)" "SOMEDAY(S)" "|" "CANCELLED(c@/!)" "MEETING(m)" "PHONE(p)"))))
 
 (require 'org-checklist)
@@ -438,22 +442,28 @@ org mode 的插件
 
 ** org agenda
 #+begin_src emacs-lisp
-  (setq org-agenda-files '("gtd.org"))
+  (setq org-agenda-files '("gtd.org" "repeat.org"))
   (setq org-agenda-span 'day)
+  ;; 当 entry 同时设置了 shceduled 和 deadline 时，不到排期时间不会在 agenda 显示
+  (setq org-agenda-skip-deadline-prewarning-if-scheduled 'pre-scheduled)
 #+end_src
 
 ** org capture
 #+begin_src emacs-lisp
-    (setq org-capture-templates
-	'(("t" "Todo" entry (file "gtd.org")
-	   "* TODO %?\n  %i\n %U"
-	   :empty-lines 1)
-	  ("j" "Journal" entry (file+datetree "journal.org")
-	   "* %^{Title} %?\n  %U\n"
-	   :empty-lines 1)
-	  ("i" "Idea" entry (file "idea.org")
-	   "*  %^{Title} %?\n %U\n"
-	  :empty-lines 1)))
+  (setq org-capture-templates
+      '(("t" "Todo" entry (file "gtd.org")
+	 "* TODO %?\n  %i\n %U"
+	 :empty-lines 1)
+	("j" "Journal" entry (file+datetree "journal.org")
+	 "* %^{Title} %?\n %U"
+	 :empty-lines 1)
+	("i" "Idea" entry (file "idea.org") ; 临时存放点，基本会移动到 gtd
+	 "*  %^{Title} %?\n %U"
+	:empty-lines 1)
+	("d" "Diet" entry (file+datetree "diet.org")
+	"* 体重：%^{Weight} %?\n %U"
+	:empty-lines 1)
+	))
 #+end_src
 
 ** org roam
@@ -471,6 +481,14 @@ org mode 的插件
   ;; If you're using a vertical completion framework, you might want a more informative completion interface
   (setq org-roam-node-display-template (concat "${title:*} " (propertize "${tags:10}" 'face 'org-tag)))
   (org-roam-db-autosync-mode))
+#+end_src
+
+** ox-hugo
+#+begin_src emacs-lisp
+  (use-package ox-hugo
+  :ensure t   ;Auto-install the package from Melpa
+  :pin melpa  ;`package-archives' should already have ("melpa" . "https://melpa.org/packages/")
+  :after ox)
 #+end_src
 * Markdown
 *markdown 作为主流，还是和 org-mode 一个待遇吧*
