@@ -122,6 +122,13 @@ https://emacs.stackexchange.com/a/20039/19518
       :hook (after-init . which-key-mode))
 #+end_src
 
+*** 窗口增强
+[[https://github.com/abo-abo/ace-window][ace-window]] 用于增强窗口切换
+#+begin_src emacs-lisp
+  (use-package ace-window
+    :bind (("M-o" . 'ace-window))
+    )
+#+end_src
 * Completion
 [[https://github.com/oantolin/orderless][orderless]] 提供（模糊搜索？）的功能
 #+begin_src emacs-lisp
@@ -185,7 +192,7 @@ https://emacs.stackexchange.com/a/20039/19518
 #+begin_src emacs-lisp
     (use-package consult
       :bind
-	(("C-s" . consult-line)
+	(("s-f" . consult-line)
 	 ("C-x b" . consult-buffer)))
 
     (use-package recentf
@@ -521,6 +528,10 @@ org mode 的插件
   :defer t)
 #+end_src
 
+* dockerfile
+#+begin_src emacs-lisp
+  (use-package dockerfile-mode)
+#+end_src
 * Version Control
 [[https://github.com/magit/magit][magit]] emacs 下 git 增强，应该会有用吧。。。
 #+begin_src emacs-lisp

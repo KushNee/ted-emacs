@@ -67,7 +67,9 @@
 (global-set-key (kbd "s-,") 'open-config-file)
 (global-set-key (kbd "s-.") 'reload-init-file)
 
-
+;; file
+(global-set-key (kbd "s-o") 'find-file)
+(global-set-key (kbd "s-O") 'ns-open-file-using-panel)
 
 ;; Moving Cursor
 (global-set-key (kbd "s-<up>") 'beginning-of-buffer)
