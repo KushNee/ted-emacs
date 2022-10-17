@@ -268,6 +268,13 @@ https://emacs.stackexchange.com/a/20039/19518
   (global-hl-line-mode 1)
 #+end_src
 ** 扩展/mode 修改
+multiple-cursors
+#+begin_src emacs-lisp
+  (use-package multiple-cursors
+    :bind (("C->" . mc/mark-next-like-this)
+           ("C-<" . mc/mark-previous-like-this)
+           ("C-c C-<" . mc/mark-all-like-this)))
+#+end_src
 [[https://codeberg.org/ideasman42/emacs-undo-fu][undo-fu]] 提供线性撤销功能
 #+begin_src emacs-lisp
   (use-package undo-fu
