@@ -191,7 +191,7 @@ https://emacs.stackexchange.com/a/20039/19518
     (use-package consult
       :bind
 	(("s-f" . consult-line)
-	 ("C-x b" . consult-buffer)))
+	 ("s-e" . consult-buffer)))
 
     (use-package recentf
       :init (recentf-mode 1))
