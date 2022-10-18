@@ -67,6 +67,10 @@
 (global-set-key (kbd "s-,") 'open-config-file)
 (global-set-key (kbd "s-.") 'reload-init-file)
 
+;; tab
+(global-set-key (kbd "s-{") 'tab-previous)
+(global-set-key (kbd "s-}") 'tab-next)
+
 ;; file
 (global-set-key (kbd "s-o") 'find-file)
 (global-set-key (kbd "s-O") 'ns-open-file-using-panel)

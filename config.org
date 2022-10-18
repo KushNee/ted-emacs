@@ -92,11 +92,9 @@ https://emacs.stackexchange.com/a/20039/19518
   (doom-themes-org-config))
 #+end_src
 
-[[https://github.com/seagle0128/doom-modeline][doom-modeline]] 更现代化的状态栏
+[[https://github.com/tarsius/minions][minions]] 更简洁的状态栏
 #+begin_src emacs-lisp
-  (use-package doom-modeline
-  :ensure t
-  :hook (after-init . doom-modeline-mode))
+  (use-package minions)
 #+end_src
 
 *** Dired
@@ -376,8 +374,9 @@ org mode 的插件
   (use-package org
     :straight (:type built-in)
     :bind (("C-c b" . org-switchb)
-	   ("C-c c" . org-capture)
-	   ("C-c a" . org-agenda)))
+           ("C-c c" . org-capture)
+           ("C-c a" . org-agenda)
+           ("C-c o" . org-open-at-point)))
 
     (use-package org-contrib)
 #+end_src
@@ -456,7 +455,6 @@ org mode 的插件
 
 ** org agenda
 #+begin_src emacs-lisp
-  (setq org-agenda-files '("gtd.org" "repeat.org"))
   (setq org-agenda-span 'day)
   ;; 当 entry 同时设置了 shceduled 和 deadline 时，不到排期时间不会在 agenda 显示
   (setq org-agenda-skip-deadline-prewarning-if-scheduled 'pre-scheduled)
@@ -494,7 +492,12 @@ org mode 的插件
   :config
   ;; If you're using a vertical completion framework, you might want a more informative completion interface
   (setq org-roam-node-display-template (concat "${title:*} " (propertize "${tags:10}" 'face 'org-tag)))
-  (org-roam-db-autosync-mode))
+  (org-roam-db-autosync-mode)
+  (setq org-roam-mode-sections
+    (list #'org-roam-backlinks-section
+          #'org-roam-reflinks-section
+          #'org-roam-unlinked-references-section
+          )))
 #+end_src
 
 ** ox-hugo
