@@ -19,7 +19,7 @@
 (setq default-frame-alist '((ns-transparent-titlebar . t)
                             (ns-appearance . light)
                             (tool-bar-lines . 0)
-                            (font . "JetBrainsMono Nerd Font-16")
+                            (font . "JetBrainsMono Nerd Font-15")
                             (left-fringe    . 3)
                             (right-fringe   . 1)
                             (vertical-scroll-bars . nil)))

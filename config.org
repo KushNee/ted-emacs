@@ -98,22 +98,64 @@ https://emacs.stackexchange.com/a/20039/19518
 #+end_src
 
 *** Dired
-[[https://github.com/jtbm37/all-the-icons-dired][all-the-icons-dired]] 提供图标
+
+[[https://github.com/alexluigit/dirvish][dirvish]] 更现代的 dired
 #+begin_src emacs-lisp
-    (use-package all-the-icons-dired
-      :hook (dired-mode . all-the-icons-dired-mode))
+  (use-package all-the-icons)
+  (use-package dirvish
+   :init
+  (dirvish-override-dired-mode)
+  :custom
+  (dirvish-quick-access-entries ; It's a custom option, `setq' won't work
+   '(("h" "~/"                          "Home")
+     ("d" "~/Downloads/"                "Downloads")
+     ("o" "~/Syncthings/org/"           "Org")
+     ("r" "~/Syncthings/org/roam/"      "Roam")))
+  :config
+  ;; (dirvish-peek-mode) ; Preview files in minibuffer
+  ;; (dirvish-side-follow-mode) ; similar to `treemacs-follow-mode'
+  (setq dirvish-mode-line-format
+        '(:left (sort symlink) :right (omit yank index)))
+  (setq dirvish-attributes
+        '(all-the-icons file-time file-size subtree-state vc-state git-msg))
+  (setq delete-by-moving-to-trash t)
+  (setq dired-listing-switches
+        "-l --almost-all --human-readable --group-directories-first --no-group")
+  :bind ; Bind `dirvish|dirvish-side|dirvish-dwim' as you see fit
+  (("C-c f" . dirvish-fd)
+   ("C-x d" . dirvish)
+   :map dirvish-mode-map ; Dirvish inherits `dired-mode-map'
+   ("a"   . dirvish-quick-access)
+   ("f"   . dirvish-file-info-menu)
+   ("y"   . dirvish-yank-menu)
+   ("N"   . dirvish-narrow)
+   ("^"   . dirvish-history-last)
+   ("h"   . dirvish-history-jump) ; remapped `describe-mode'
+   ("s"   . dirvish-quicksort)    ; remapped `dired-sort-toggle-or-edit'
+   ("v"   . dirvish-vc-menu)      ; remapped `dired-view-file'
+   ("TAB" . dirvish-subtree-toggle)
+   ("M-f" . dirvish-history-go-forward)
+   ("M-b" . dirvish-history-go-backward)
+   ("M-l" . dirvish-ls-switches-menu)
+   ("M-m" . dirvish-mark-menu)
+   ("M-t" . dirvish-layout-toggle)
+   ("M-s" . dirvish-setup-menu)
+   ("M-e" . dirvish-emerge-menu)
+   ("M-j" . dirvish-fd-jump)))
+
+  (dirvish-define-preview exa (file)
+  "Use `exa' to generate directory preview."
+  :require ("exa") ; tell Dirvish to check if we have the executable
+  (when (file-directory-p file) ; we only interest in directories here
+    `(shell . ("exa" "-al" "--color=always" "--icons"
+               "--group-directories-first" ,file))))
+
+  (add-to-list 'dirvish-preview-dispatchers 'exa)
+
+  (setq insert-directory-program "gls")
 #+end_src
 
-[[https://github.com/Fuco1/dired-hacks#dired-subtree][dired-subtree]] 使用 ~Tab~ 进行子树展示
-#+begin_src emacs-lisp
-  (use-package dired-subtree
-  :after dired
-  :bind
-  (:map  dired-mode-map
-   ("<tab>"     . dired-subtree-toggle)
-   ("<backtab>" . dired-subtree-cycle)))
-#+end_src
-
+*** which key
 [[https://github.com/justbur/emacs-which-key][which-key]] 提供按键提示
 #+begin_src emacs-lisp
     (use-package which-key
@@ -463,41 +505,90 @@ org mode 的插件
 ** org capture
 #+begin_src emacs-lisp
   (setq org-capture-templates
-      '(("t" "Todo" entry (file "gtd.org")
-	 "* TODO %?\n  %i\n %U"
-	 :empty-lines 1)
-	("j" "Journal" entry (file+datetree "journal.org")
-	 "* %^{Title} %?\n %U"
-	 :empty-lines 1)
-	("i" "Idea" entry (file "idea.org") ; 临时存放点，基本会移动到 gtd
-	 "*  %^{Title} %?\n %U"
-	:empty-lines 1)
-	("d" "Diet" entry (file+datetree "diet.org")
-	"* 体重：%^{Weight} %?\n %U"
-	:empty-lines 1)
-	))
+      '(("t" "Todo" entry (file+olp "gtd.org" "single todo")
+         "* TODO %?\n%i\n%U"
+         :empty-lines 1)
+        ("r" "Repeat" entry (file+olp "gtd.org" "repeat")
+         "* TODO %?\n%i\n%U"
+         :empty-lines 1)
+        ("j" "Journal" entry (file+datetree "journal.org")
+         "* %^{Title} %?\n%U"
+         :empty-lines 1)
+        ("i" "Idea" entry (file "idea.org") ; 临时存放点，之后会移动到相应位置
+         "*  %^{Title} %?\n%U"
+        :empty-lines 1)
+        ("d" "Diet" entry (file+datetree "diet.org")
+        "* 体重：%^{Weight}\n%?\n%U"
+        :empty-lines 1)
+        ("b" "Bookmark" entry (file+weektree "bookmark.org")
+         "* url: %?\ndesc: %^{Desc}\n%U"
+         :empty-lines 1)
+        ))
 #+end_src
 
 ** org roam
 #+begin_src emacs-lisp
+   (defun kush/ensure-org-ids-in-buffer ()
+    "Run `org-id-get-create' on all headlines in current buffer"
+    (interactive)
+    (org-map-entries #'org-id-get-create t 'file))
+
   (use-package org-roam
   :ensure t
   :custom
   (org-roam-directory (file-truename (string-join (cons org-directory '("roam")) "/")))
+  (org-roam-db-location (file-truename (string-join (cons org-roam-directory '("org-roam.db")) "/")))
+  (org-roam-db-gc-threshold most-positive-fixnum)
   :bind (("C-c n l" . org-roam-buffer-toggle)
          ("C-c n f" . org-roam-node-find)
-         ("C-c n g" . org-roam-graph)
+         ("C-c n g" . kush/ensure-org-ids-in-buffer)
          ("C-c n i" . org-roam-node-insert)
          ("C-c n c" . org-roam-capture))
   :config
-  ;; If you're using a vertical completion framework, you might want a more informative completion interface
-  (setq org-roam-node-display-template (concat "${title:*} " (propertize "${tags:10}" 'face 'org-tag)))
   (org-roam-db-autosync-mode)
   (setq org-roam-mode-sections
     (list #'org-roam-backlinks-section
           #'org-roam-reflinks-section
           #'org-roam-unlinked-references-section
-          )))
+          ))
+  ;; Codes blow are used to general a hierachy for title nodes that under a file
+  (cl-defmethod org-roam-node-type ((node org-roam-node))
+    "Return the TYPE of NODE."
+    (condition-case nil
+        (file-name-nondirectory
+         (directory-file-name
+          (file-name-directory
+           (file-relative-name (org-roam-node-file node) org-roam-directory))))
+      (error "")))
+      (cl-defmethod org-roam-node-filetitle ((node org-roam-node))
+        "Return the value of \"#+title:\" (if any) from file that NODE resides in.
+      If there's no file-level title in the file, return empty string."
+        (or (if (= (org-roam-node-level node) 0)
+                (org-roam-node-title node)
+              (org-roam-get-keyword "TITLE" (org-roam-node-file node)))
+            ""))
+      (cl-defmethod org-roam-node-hierarchy ((node org-roam-node))
+        "Return hierarchy for NODE, constructed of its file title, OLP and direct title.
+        If some elements are missing, they will be stripped out."
+        (let ((title     (org-roam-node-title node))
+              (olp       (org-roam-node-olp   node))
+              (level     (org-roam-node-level node))
+              (filetitle (org-roam-node-filetitle node))
+              (separator (propertize " > " 'face 'shadow)))
+          (cl-case level
+            ;; node is a top-level file
+            (0 filetitle)
+            ;; node is a level 1 heading
+            (1 (concat (propertize filetitle 'face '(shadow italic))
+                       separator title))
+            ;; node is a heading with an arbitrary outline path
+            (t (concat (propertize filetitle 'face '(shadow italic))
+                       separator (propertize (string-join olp " > ") 'face '(shadow italic))
+                       separator title)))))
+
+      (setq org-roam-node-display-template (concat "${type:15} ${hierarchy:100} " (propertize "${tags:*}" 'face 'org-tag)))
+  )
+
 #+end_src
 
 ** ox-hugo
