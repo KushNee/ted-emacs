@@ -9,23 +9,23 @@ emacs 相关魔法头
 ** Straight
 [[https:github.com/radian-software/straight.el][straight.el]] 是 package.el 的现代替代
 #+begin_src emacs-lisp
-(defvar bootstrap-version)
-(let ((bootstrap-file
-       (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
-      (bootstrap-version 6))
-  (unless (file-exists-p bootstrap-file)
-    (with-current-buffer
-        (url-retrieve-synchronously
-         "https://raw.githubusercontent.com/radian-software/straight.el/develop/install.el"
-         'silent 'inhibit-cookies)
-      (goto-char (point-max))
-      (eval-print-last-sexp)))
-  (load bootstrap-file nil 'nomessage))
+  (defvar bootstrap-version)
+  (let ((bootstrap-file
+         (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
+        (bootstrap-version 6))
+    (unless (file-exists-p bootstrap-file)
+      (with-current-buffer
+          (url-retrieve-synchronously
+           "https://raw.githubusercontent.com/radian-software/straight.el/develop/install.el"
+           'silent 'inhibit-cookies)
+        (goto-char (point-max))
+        (eval-print-last-sexp)))
+    (load bootstrap-file nil 'nomessage))
 #+end_src
 
 设置 github 仓库的默认拉取层级
 #+begin_src emacs-lisp
-(setq straight-vc-git-default-clone-depth 1)
+  (setq straight-vc-git-default-clone-depth 1)
 #+end_src
 
 ** Use Package
@@ -40,14 +40,14 @@ emacs 相关魔法头
 使 emacs 获取 ~$PATH~
 #+begin_src emacs-lisp
   (use-package exec-path-from-shell
-  :when (or (memq window-system '(mac ns x))
-	    (unless (memq system-type '(ms-dos windows-nt))
-	      (daemonp)))
-  :custom (exec-path-from-shell-arguments '("-l"))
-  :config
-  (dolist (var '("GPG_AGENT_INFO" "LANG" "LC_CTYPE"))
-    (add-to-list 'exec-path-from-shell-variables var))
-  (exec-path-from-shell-initialize))
+    :when (or (memq window-system '(mac ns x))
+              (unless (memq system-type '(ms-dos windows-nt))
+                (daemonp)))
+    :custom (exec-path-from-shell-arguments '("-l"))
+    :config
+    (dolist (var '("GPG_AGENT_INFO" "LANG" "LC_CTYPE"))
+      (add-to-list 'exec-path-from-shell-variables var))
+    (exec-path-from-shell-initialize))
 
 #+end_src
 
@@ -56,42 +56,51 @@ emacs 相关魔法头
 去除无用警告
 https://emacs.stackexchange.com/a/20039/19518
 #+begin_src emacs-lisp
-(defun filter-command-error-function (data context caller)
-  "Ignore the buffer-read-only, beginning-of-line, end-of-line, beginning-of-buffer, end-of-buffer signals; pass the rest to the default handler."
-  (when (not (memq (car data) '(buffer-read-only
-                                mark-inactive
-                                beginning-of-line
-                                end-of-line
-                                beginning-of-buffer
-                                end-of-buffer)))
-    (command-error-default-function data context caller)))
+  (defun filter-command-error-function (data context caller)
+    "Ignore the buffer-read-only, beginning-of-line, end-of-line, beginning-of-buffer, end-of-buffer signals; pass the rest to the default handler."
+    (when (not (memq (car data) '(buffer-read-only
+                                  mark-inactive
+                                  beginning-of-line
+                                  end-of-line
+                                  beginning-of-buffer
+                                  end-of-buffer)))
+      (command-error-default-function data context caller)))
 
-(setq command-error-function #'filter-command-error-function)
+  (setq command-error-function #'filter-command-error-function)
 #+end_src
 
 ** 扩展/mode 修改
 *** Color Theme
 默认使用 [[https://github.com/doomemacs/themes][doom-themes]]。
 #+begin_src emacs-lisp
-(use-package doom-themes
-  :ensure t
-  :config
-  ;; Global settings (defaults)
-  (setq doom-themes-enable-bold t    ; if nil, bold is universally disabled
-        doom-themes-enable-italic t) ; if nil, italics is universally disabled
-  (load-theme 'doom-one t)
+  (use-package doom-themes
+    :ensure t
+    :config
+    ;; Global settings (defaults)
+    (setq doom-themes-enable-bold t    ; if nil, bold is universally disabled
+          doom-themes-enable-italic t) ; if nil, italics is universally disabled
 
-  ;; Enable flashing mode-line on errors
-  (doom-themes-visual-bell-config)
-  ;; Enable custom neotree theme (all-the-icons must be installed!)
-  (doom-themes-neotree-config)
-  ;; or for treemacs users
-  (setq doom-themes-treemacs-theme "doom-atom") ; use "doom-colors" for less minimal icon theme
-  (doom-themes-treemacs-config)
-  ;; Corrects (and improves) org-mode's native fontification.
-  (doom-themes-org-config))
+
+    ;; Enable flashing mode-line on errors
+    (doom-themes-visual-bell-config)
+    ;; Enable custom neotree theme (all-the-icons must be installed!)
+    (doom-themes-neotree-config)
+    ;; or for treemacs users
+    (setq doom-themes-treemacs-theme "doom-atom") ; use "doom-colors" for less minimal icon theme
+    (doom-themes-treemacs-config)
+    ;; Corrects (and improves) org-mode's native fontification.
+    (doom-themes-org-config))
 #+end_src
 
+自动切换主题
+#+begin_src emacs-lisp
+  (use-package circadian
+    :ensure t
+    :config
+    (setq circadian-themes '(("0:00" . doom-one)
+                             ("7:00" . doom-one-light)))
+    (circadian-setup))
+#+end_src
 [[https://github.com/tarsius/minions][minions]] 更简洁的状态栏
 #+begin_src emacs-lisp
   (use-package minions)
@@ -103,51 +112,52 @@ https://emacs.stackexchange.com/a/20039/19518
 #+begin_src emacs-lisp
   (use-package all-the-icons)
   (use-package dirvish
-   :init
-  (dirvish-override-dired-mode)
-  :custom
-  (dirvish-quick-access-entries ; It's a custom option, `setq' won't work
-   '(("h" "~/"                          "Home")
-     ("d" "~/Downloads/"                "Downloads")
-     ("o" "~/Syncthings/org/"           "Org")
-     ("r" "~/Syncthings/org/roam/"      "Roam")))
-  :config
-  ;; (dirvish-peek-mode) ; Preview files in minibuffer
-  ;; (dirvish-side-follow-mode) ; similar to `treemacs-follow-mode'
-  (setq dirvish-mode-line-format
-        '(:left (sort symlink) :right (omit yank index)))
-  (setq dirvish-attributes
-        '(all-the-icons file-time file-size subtree-state vc-state git-msg))
-  (setq delete-by-moving-to-trash t)
-  (setq dired-listing-switches
-        "-l --almost-all --human-readable --group-directories-first --no-group")
-  :bind ; Bind `dirvish|dirvish-side|dirvish-dwim' as you see fit
-  (("C-c f" . dirvish-fd)
-   ("C-x d" . dirvish)
-   :map dirvish-mode-map ; Dirvish inherits `dired-mode-map'
-   ("a"   . dirvish-quick-access)
-   ("f"   . dirvish-file-info-menu)
-   ("y"   . dirvish-yank-menu)
-   ("N"   . dirvish-narrow)
-   ("^"   . dirvish-history-last)
-   ("h"   . dirvish-history-jump) ; remapped `describe-mode'
-   ("s"   . dirvish-quicksort)    ; remapped `dired-sort-toggle-or-edit'
-   ("v"   . dirvish-vc-menu)      ; remapped `dired-view-file'
-   ("TAB" . dirvish-subtree-toggle)
-   ("M-f" . dirvish-history-go-forward)
-   ("M-b" . dirvish-history-go-backward)
-   ("M-l" . dirvish-ls-switches-menu)
-   ("M-m" . dirvish-mark-menu)
-   ("M-t" . dirvish-layout-toggle)
-   ("M-s" . dirvish-setup-menu)
-   ("M-e" . dirvish-emerge-menu)
-   ("M-j" . dirvish-fd-jump)))
+    :init
+    (dirvish-override-dired-mode)
+    :custom
+    (dirvish-quick-access-entries ; It's a custom option, `setq' won't work
+     '(("h" "~/"                          "Home")
+       ("d" "~/Downloads/"                "Downloads")
+       ("o" "~/Syncthings/org/"           "Org")
+       ("r" "~/Syncthings/org/roam/"      "Roam")))
+    :config
+    ;; (dirvish-peek-mode) ; Preview files in minibuffer
+    ;; (dirvish-side-follow-mode) ; similar to `treemacs-follow-mode'
+    (setq dirvish-mode-line-format
+          '(:left (sort symlink) :right (omit yank index)))
+    (setq dirvish-attributes
+          '(all-the-icons file-time file-size subtree-state vc-state git-msg))
+    (setq delete-by-moving-to-trash t)
+    (setq dired-listing-switches
+          "-l --almost-all --human-readable --group-directories-first --no-group")
+    :bind ; Bind `dirvish|dirvish-side|dirvish-dwim' as you see fit
+    (("C-c f" . dirvish-fd)
+     ("C-x d" . dirvish)
+     :map dirvish-mode-map ; Dirvish inherits `dired-mode-map'
+     ("a"   . dirvish-quick-access)
+     ("f"   . dirvish-file-info-menu)
+     ("y"   . dirvish-yank-menu)
+     ("N"   . dirvish-narrow)
+     ("^"   . dirvish-history-last)
+     ("-"   . dired-jump)
+     ("h"   . dirvish-history-jump) ; remapped `describe-mode'
+     ("s"   . dirvish-quicksort)    ; remapped `dired-sort-toggle-or-edit'
+     ("v"   . dirvish-vc-menu)      ; remapped `dired-view-file'
+     ("TAB" . dirvish-subtree-toggle)
+     ("M-f" . dirvish-history-go-forward)
+     ("M-b" . dirvish-history-go-backward)
+     ("M-l" . dirvish-ls-switches-menu)
+     ("M-m" . dirvish-mark-menu)
+     ("M-t" . dirvish-layout-toggle)
+     ("M-s" . dirvish-setup-menu)
+     ("M-e" . dirvish-emerge-menu)
+     ("M-j" . dirvish-fd-jump)))
 
   (dirvish-define-preview exa (file)
-  "Use `exa' to generate directory preview."
-  :require ("exa") ; tell Dirvish to check if we have the executable
-  (when (file-directory-p file) ; we only interest in directories here
-    `(shell . ("exa" "-al" "--color=always" "--icons"
+    "Use `exa' to generate directory preview."
+    :require ("exa") ; tell Dirvish to check if we have the executable
+    (when (file-directory-p file) ; we only interest in directories here
+      `(shell . ("exa" "-al" "--color=always" "--icons"
                "--group-directories-first" ,file))))
 
   (add-to-list 'dirvish-preview-dispatchers 'exa)
@@ -158,119 +168,140 @@ https://emacs.stackexchange.com/a/20039/19518
 *** which key
 [[https://github.com/justbur/emacs-which-key][which-key]] 提供按键提示
 #+begin_src emacs-lisp
-    (use-package which-key
-      :hook (after-init . which-key-mode))
+  (use-package which-key
+    :hook (after-init . which-key-mode))
 #+end_src
 
 *** 窗口增强
 [[https://github.com/abo-abo/ace-window][ace-window]] 用于增强窗口切换
 #+begin_src emacs-lisp
   (use-package ace-window
-    :bind (("M-o" . 'ace-window))
-    )
+    :bind (("M-o" . 'ace-window)))
 #+end_src
 * Completion
 [[https://github.com/oantolin/orderless][orderless]] 提供（模糊搜索？）的功能
 #+begin_src emacs-lisp
   (use-package orderless
-  :ensure t
-  :custom
-  (completion-styles '(orderless basic))
-  (completion-category-overrides '((file (styles basic partial-completion)))))
+    :ensure t
+    :custom
+    (completion-styles '(orderless basic))
+    (completion-category-overrides '((file (styles basic partial-completion)))))
 #+end_src
 
 [[https://github.com/minad/vertico][vertico]] minibuffer 补全/增强
 #+begin_src emacs-lisp
   (use-package vertico
-  :custom
-  (vertico-cycle t)
-  (enable-recursive-minibuffers t)
-  :config (vertico-mode))
+    :custom
+    (vertico-cycle t)
+    (enable-recursive-minibuffers t)
+    :config (vertico-mode))
 #+end_src
 
 [[https://github.com/minad/marginalia][marginalia]] 增强 minibuffer 中命令/参数/函数的描述性
 #+begin_src emacs-lisp
   (use-package marginalia
-  ;; Either bind `marginalia-cycle' globally or only in the minibuffer
-  :bind (("M-A" . marginalia-cycle)
-         :map minibuffer-local-map
-         ("M-A" . marginalia-cycle))
+    ;; Either bind `marginalia-cycle' globally or only in the minibuffer
+    :bind (("M-A" . marginalia-cycle)
+           :map minibuffer-local-map
+           ("M-A" . marginalia-cycle))
 
-  ;; The :init configuration is always executed (Not lazy!)
-  :init
+    ;; The :init configuration is always executed (Not lazy!)
+    :init
 
-  ;; Must be in the :init section of use-package such that the mode gets
-  ;; enabled right away. Note that this forces loading the package.
-  (marginalia-mode))
+    ;; Must be in the :init section of use-package such that the mode gets
+    ;; enabled right away. Note that this forces loading the package.
+    (marginalia-mode))
 #+end_src
 
 [[https://github.com/oantolin/embark][embark]] 用于查看/修改光标下对象的属性
 #+begin_src emacs-lisp
   (use-package embark
-  :ensure t
+    :ensure t
 
-  :bind
-  (("C-." . embark-act)         ;; pick some comfortable binding
-   ("C-;" . embark-dwim)        ;; good alternative: M-.
-   ("C-h B" . embark-bindings)) ;; alternative for `describe-bindings'
+    :bind
+    (("C-." . embark-act)         ;; pick some comfortable binding
+     ("C-;" . embark-dwim)        ;; good alternative: M-.
+     ("C-h B" . embark-bindings)) ;; alternative for `describe-bindings'
 
-  :init
+    :init
 
-  ;; Optionally replace the key help with a completing-read interface
-  (setq prefix-help-command #'embark-prefix-help-command)
+    ;; Optionally replace the key help with a completing-read interface
+    (setq prefix-help-command #'embark-prefix-help-command)
 
-  :config
+    :config
 
-  ;; Hide the mode line of the Embark live/completions buffers
-  (add-to-list 'display-buffer-alist
-               '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
-                 nil
-                 (window-parameters (mode-line-format . none)))))
+    ;; Hide the mode line of the Embark live/completions buffers
+    (add-to-list 'display-buffer-alist
+                 '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
+                   nil
+                   (window-parameters (mode-line-format . none)))))
 #+end_src
 
 [[https://github.com/minad/consult/][consult]] 搜索/跳转增强
 #+begin_src emacs-lisp
-    (use-package consult
-      :bind
-	(("s-f" . consult-line)
-	 ("s-e" . consult-buffer)))
+  (use-package consult
+    :bind
+    (("s-f" . consult-line)
+     ("s-e" . consult-buffer)
+     ("s-l" . consult-goto-line)))
 
-    (use-package recentf
-      :init (recentf-mode 1))
+  (use-package recentf
+    :init (recentf-mode 1))
+#+end_src
+
+corfu 补全框架
+#+begin_src emacs-lisp
+  (use-package corfu
+    :custom
+    (corfu-cycle t)
+    (corfu-auto t)
+    (corfu-max-width 100)
+    (corfu-auto-delay 0.15)
+    (corfu-auto-prefix 1)
+    (corfu-preview-current nil)
+    :hook (eshell-mode . (lambda () (setq-local corfu-auto nil)))
+    :init
+    (global-corfu-mode))
+
+  (use-package cape
+    :after corfu
+    :bind (("C-c p p" . completion-at-point)
+           ("C-c p t" . complete-tag)
+           ("C-c p d" . cape-dabbrev)
+           ("C-c p f" . cape-file)
+           ("C-c p s" . cape-symbol)
+           ("C-c p a" . cape-abbrev)
+           ("C-c p i" . cape-ispell)
+           ("C-c p l" . cape-line)
+           ("C-c p w" . cape-dict))
+    :init
+    (add-to-list 'completion-at-point-functions #'cape-file))
+
+  (use-package kind-icon
+    :after corfu
+    :custom
+    (kind-icon-default-face 'corfu-default)
+    :config
+    (add-to-list 'corfu-margin-formatters #'kind-icon-margin-formatter))
 #+end_src
 
 #+begin_src emacs-lisp
- (use-package corfu
-  :custom
-  (corfu-auto t)
-  (corfu-max-width 100)
-  (corfu-auto-delay 0.15)
-  (corfu-auto-prefix 1)
-  (corfu-preview-current nil)
-  :hook (eshell-mode . (lambda () (setq-local corfu-auto nil)))
-  :init
-  (global-corfu-mode))
+  (use-package corfu-doc
+    :bind (:map corfu-map
+                ;; This is a manual toggle for the documentation window.
+                ([remap corfu-show-documentation] . corfu-doc-toggle) ; Remap the default doc command
+                ;; Scroll in the documentation window
+                ("M-n" . corfu-doc-scroll-up)
+                ("M-p" . corfu-doc-scroll-down))
+    :hook (corfu-mode . corfu-doc-mode)
+    :custom
+    (corfu-doc-delay 0.1)
+    (corfu-doc-hide-threshold 10)
+    (corfu-doc-max-width 60)
+    (corfu-doc-max-height 10)
 
-(use-package cape
-  :after corfu
-  :bind (("C-c p p" . completion-at-point)
-         ("C-c p t" . complete-tag)
-         ("C-c p d" . cape-dabbrev)
-         ("C-c p f" . cape-file)
-         ("C-c p s" . cape-symbol)
-         ("C-c p a" . cape-abbrev)
-         ("C-c p i" . cape-ispell)
-         ("C-c p l" . cape-line)
-         ("C-c p w" . cape-dict))
-  :init
-  (add-to-list 'completion-at-point-functions #'cape-file))
-
-(use-package kind-icon
-  :after corfu
-  :custom
-  (kind-icon-default-face 'corfu-default)
-  :config
-  (add-to-list 'corfu-margin-formatters #'kind-icon-margin-formatter))
+    :config
+    (corfu-doc-mode))
 #+end_src
 
 * Window Management
@@ -284,9 +315,9 @@ https://emacs.stackexchange.com/a/20039/19518
 [[https://github.com/emacsorphanage/zoom-window][zoom-window]] 用于临时全屏窗口
 #+begin_src emacs-lisp
   (use-package zoom-window
-  :bind ("C-x C-z" . zoom-window-zoom)
-  :custom
-  (zoom-window-mode-line-color "DarkGreen"))
+    :bind ("C-x C-z" . zoom-window-zoom)
+    :custom
+    (zoom-window-mode-line-color "DarkGreen"))
 #+end_src
 
 * TODO File Edit
@@ -318,40 +349,40 @@ multiple-cursors
 [[https://codeberg.org/ideasman42/emacs-undo-fu][undo-fu]] 提供线性撤销功能
 #+begin_src emacs-lisp
   (use-package undo-fu
-  :bind
-  (("s-z" . undo-fu-only-undo)
-   ("s-Z" . undo-fu-only-redo))
-  :custom
-  (undo-fu-allow-undo-in-region t))
+    :bind
+    (("s-z" . undo-fu-only-undo)
+     ("s-Z" . undo-fu-only-redo))
+    :custom
+    (undo-fu-allow-undo-in-region t))
 #+end_src
 
 [[https://codeberg.org/ideasman42/emacs-undo-fu-session][undo-fu-session]] 用于增强 ~undo-fu~
 #+begin_src emacs-lisp
   (use-package undo-fu-session
-  :config
-  (setq undo-fu-session-incompatible-files '("/COMMIT_EDITMSG\\'" "/git-rebase-todo\\'"))
-  (global-undo-fu-session-mode))
+    :config
+    (setq undo-fu-session-incompatible-files '("/COMMIT_EDITMSG\\'" "/git-rebase-todo\\'"))
+    (global-undo-fu-session-mode))
 #+end_src
 
 [[https://github.com/casouri/undo-hl][undo-hl]] 视觉化撤销操作
 #+begin_src emacs-lisp
   (use-package undo-hl
-  :straight (undo-hl :type git :host github :repo "casouri/undo-hl")
-  :hook
-  (text-mode . undo-hl-mode))
+    :straight (undo-hl :type git :host github :repo "casouri/undo-hl")
+    :hook
+    (text-mode . undo-hl-mode))
 #+end_src
 
 [[https://github.com/Fanael/rainbow-delimiters][rainbow-delimiters]] 彩色显示对称符号
 #+begin_src emacs-lisp
-(use-package rainbow-delimiters
-  :hook
-  ((prog-mode . rainbow-delimiters-mode)
-   (latex-mode . rainbow-delimiters-mode))
-  :config
-  (set-face-attribute 'rainbow-delimiters-unmatched-face nil
-                      :foreground 'unspecified
-                      :inherit 'error
-                      :strike-through t))
+  (use-package rainbow-delimiters
+    :hook
+    ((prog-mode . rainbow-delimiters-mode)
+     (latex-mode . rainbow-delimiters-mode))
+    :config
+    (set-face-attribute 'rainbow-delimiters-unmatched-face nil
+                        :foreground 'unspecified
+                        :inherit 'error
+                        :strike-through t))
 #+end_src
 
 [[https://github.com/manateelazycat/auto-save][auto-save]] 增强自动保存
@@ -359,31 +390,31 @@ multiple-cursors
   (use-package auto-save
     :straight (auto-save :type git :host github :repo "manateelazycat/auto-save")
     :config
-  (auto-save-enable)
-  (setq auto-save-silent t)
-  (setq auto-save-delete-trailing-whitespave t)
-  ;; 关闭自带的自动保存
-  (setq auto-save-default nil))
+    (auto-save-enable)
+    (setq auto-save-silent t)
+    (setq auto-save-delete-trailing-whitespave t)
+    ;; 关闭自带的自动保存
+    (setq auto-save-default nil))
 #+end_src
 
 [[https://github.com/magnars/multiple-cursors.el][multiple-cursors]] 顾名思义，提供类似 vim 的列操作功能
 #+begin_src emacs-lisp
   (use-package multiple-cursors
-  :bind
-   (("s-d" . mc/mark-next-like-this)
-    ("s-D" . mc/mark-all-like-this)
-    :map mc/keymap
+    :bind
+    (("s-d" . mc/mark-next-like-this)
+     ("s-D" . mc/mark-all-like-this)
+     :map mc/keymap
      ("<return>" . nil))
-  :custom
-  ;; Make mc slicent instead of asking almost every action.
-  (mc/always-run-for-all t))
+    :custom
+    ;; Make mc slicent instead of asking almost every action.
+    (mc/always-run-for-all t))
 #+end_src
 
 [[https://github.com/joaotavora/yasnippet][yasnippet]] 提供代码片段展开功能
 #+begin_src emacs-lisp
   (use-package yasnippet
-  :diminish yas-minor-mode
-  :hook (after-init . yas-global-mode))
+    :diminish yas-minor-mode
+    :hook (after-init . yas-global-mode))
 #+end_src
 
 [[https://github.com/AndreaCrotti/yasnippet-snippets][yasnippet-snippets]] 提供常用 snippets
@@ -420,15 +451,15 @@ org mode 的插件
            ("C-c a" . org-agenda)
            ("C-c o" . org-open-at-point)))
 
-    (use-package org-contrib)
+  (use-package org-contrib)
 #+end_src
 
 禁用左尖括号配对，方便代码片段插入
 #+begin_src emacs-lisp
   ;; 禁用左尖括号
-(setq electric-pair-inhibit-predicate
-      `(lambda (c)
-	 (if (char-equal c ?\<) t (,electric-pair-inhibit-predicate c))))
+  (setq electric-pair-inhibit-predicate
+        `(lambda (c)
+           (if (char-equal c ?\<) t (,electric-pair-inhibit-predicate c))))
 #+end_src
 
 使用 return 打开链接
@@ -454,45 +485,45 @@ org mode 的插件
 
 [[https://github.com/minad/org-modern][org-modern]] 更现代化的 org 文件展示
 #+begin_src emacs-lisp
-(use-package org-modern
-  :hook
-  (org-mode . org-modern-mode)
-  :custom
-  (org-modern-star ["›"] )
-  (org-modern-hide-stars nil)
-  ;; Use valign instead
-  (org-modern-table nil))
+  (use-package org-modern
+    :hook
+    (org-mode . org-modern-mode)
+    :custom
+    (org-modern-star ["›"] )
+    (org-modern-hide-stars nil)
+    ;; Use valign instead
+    (org-modern-table nil))
 #+end_src
 
 [[https://github.com/casouri/valign][valign]] 像素级对齐中英文混编的表格
 #+begin_src emacs-lisp
- (use-package valign
-  :hook
-  ;; FIX: Performance is lack, cause slow movement.
-  ;; Waiting for the author to rewrite the package https://github.com/casouri/valign/issues/29
-  ((markdown-mode org-mode) . valign-mode)
-  :config
-  (setq valign-fancy-bar 1))
+  (use-package valign
+    :hook
+    ;; FIX: Performance is lack, cause slow movement.
+    ;; Waiting for the author to rewrite the package https://github.com/casouri/valign/issues/29
+    ((markdown-mode org-mode) . valign-mode)
+    :config
+    (setq valign-fancy-bar 1))
 #+end_src
 
 [[https://github.com/DarthFennec/highlight-indent-guides][highlight-indent-guides]] 提供对块的竖线分隔
 #+begin_src emacs-lisp
-	  (use-package highlight-indent-guides
-	    :hook (org-mode . highlight-indent-guides-mode)
-	    :config
-	    (setq highlight-indent-guides-method 'character)
-	    (setq highlight-indent-guides-auto-character-face-perc 100))
+  (use-package highlight-indent-guides
+    :hook (org-mode . highlight-indent-guides-mode)
+    :config
+    (setq highlight-indent-guides-method 'character)
+    (setq highlight-indent-guides-auto-character-face-perc 80))
 #+end_src
 ** org todo
 #+begin_src emacs-lisp
   (setq org-todo-keywords
-      (quote ((sequence "TODO(t)" "DOING(D)" "|" "DONE(d!/!)")
-	      (sequence "WAITING(w@/!)" "SOMEDAY(S)" "|" "CANCELLED(c@/!)" "MEETING(m)" "PHONE(p)"))))
+        (quote ((sequence "TODO(t)" "DOING(D)" "|" "DONE(d!/!)")
+                (sequence "WAITING(w@/!)" "SOMEDAY(S)" "|" "CANCELLED(c@/!)" "MEETING(m)" "PHONE(p)"))))
 
-(require 'org-checklist)
-;; need repeat task and properties
-(setq org-log-done t)
-(setq org-log-into-drawer t)
+  (require 'org-checklist)
+  ;; need repeat task and properties
+  (setq org-log-done t)
+  (setq org-log-into-drawer t)
 #+end_src
 
 ** org agenda
@@ -505,163 +536,156 @@ org mode 的插件
 ** org capture
 #+begin_src emacs-lisp
   (setq org-capture-templates
-      '(("t" "Todo" entry (file+olp "gtd.org" "single todo")
-         "* TODO %?\n%i\n%U"
-         :empty-lines 1)
-        ("r" "Repeat" entry (file+olp "gtd.org" "repeat")
-         "* TODO %?\n%i\n%U"
-         :empty-lines 1)
-        ("j" "Journal" entry (file+datetree "journal.org")
-         "* %^{Title} %?\n%U"
-         :empty-lines 1)
-        ("i" "Idea" entry (file "idea.org") ; 临时存放点，之后会移动到相应位置
-         "*  %^{Title} %?\n%U"
-        :empty-lines 1)
-        ("d" "Diet" entry (file+datetree "diet.org")
-        "* 体重：%^{Weight}\n%?\n%U"
-        :empty-lines 1)
-        ("b" "Bookmark" entry (file+weektree "bookmark.org")
-         "* url: %?\ndesc: %^{Desc}\n%U"
-         :empty-lines 1)
-        ))
+        '(("t" "Todo" entry (file+olp "gtd.org" "single todo")
+           "* TODO %?\n%i\n%U"
+           :empty-lines 1)
+          ("r" "Repeat" entry (file+olp "gtd.org" "repeat")
+           "* TODO %?\n%i\n%U"
+           :empty-lines 1)
+          ("j" "Journal" entry (file+datetree "journal.org")
+           "* %^{Title} %?\n%U"
+           :empty-lines 1)
+          ("i" "Idea" entry (file "idea.org") ; 临时存放点，之后会移动到相应位置
+           "*  %^{Title} %?\n%U"
+           :empty-lines 1)
+          ("b" "Bookmark" entry (file+weektree "bookmark.org")
+           "* url: %?\ndesc: %^{Desc}\n%U"
+           :empty-lines 1)))
 #+end_src
 
 ** org roam
 #+begin_src emacs-lisp
-   (defun kush/ensure-org-ids-in-buffer ()
+  (defun kush/ensure-org-ids-in-buffer ()
     "Run `org-id-get-create' on all headlines in current buffer"
     (interactive)
     (org-map-entries #'org-id-get-create t 'file))
 
   (use-package org-roam
-  :ensure t
-  :custom
-  (org-roam-directory (file-truename (string-join (cons org-directory '("roam")) "/")))
-  (org-roam-db-location (file-truename (string-join (cons org-roam-directory '("org-roam.db")) "/")))
-  (org-roam-db-gc-threshold most-positive-fixnum)
-  :bind (("C-c n l" . org-roam-buffer-toggle)
-         ("C-c n f" . org-roam-node-find)
-         ("C-c n g" . kush/ensure-org-ids-in-buffer)
-         ("C-c n i" . org-roam-node-insert)
-         ("C-c n c" . org-roam-capture))
-  :config
-  (org-roam-db-autosync-mode)
-  (setq org-roam-mode-sections
-    (list #'org-roam-backlinks-section
-          #'org-roam-reflinks-section
-          #'org-roam-unlinked-references-section
-          ))
-  ;; Codes blow are used to general a hierachy for title nodes that under a file
-  (cl-defmethod org-roam-node-type ((node org-roam-node))
-    "Return the TYPE of NODE."
-    (condition-case nil
-        (file-name-nondirectory
-         (directory-file-name
-          (file-name-directory
-           (file-relative-name (org-roam-node-file node) org-roam-directory))))
-      (error "")))
-      (cl-defmethod org-roam-node-filetitle ((node org-roam-node))
-        "Return the value of \"#+title:\" (if any) from file that NODE resides in.
+    :ensure t
+    :custom
+    (org-roam-directory (file-truename (string-join (cons org-directory '("roam")) "/")))
+    (org-roam-db-location (file-truename (string-join (cons org-roam-directory '("org-roam.db")) "/")))
+    (org-roam-db-gc-threshold most-positive-fixnum)
+    :bind (("C-c n l" . org-roam-buffer-toggle)
+           ("C-c n f" . org-roam-node-find)
+           ("C-c n g" . kush/ensure-org-ids-in-buffer)
+           ("C-c n i" . org-roam-node-insert)
+           ("C-c n c" . org-roam-capture))
+    :config
+    (org-roam-db-autosync-mode)
+    (setq org-roam-mode-sections
+          (list #'org-roam-backlinks-section
+                #'org-roam-reflinks-section
+                #'org-roam-unlinked-references-section
+                ))
+    (setq org-roam-node-display-template (concat "${type:15} ${hierarchy:100} " (propertize "${tags:*}" 'face 'org-tag)))
+    ;; Codes blow are used to general a hierachy for title nodes that under a file
+    (cl-defmethod org-roam-node-type ((node org-roam-node))
+      "Return the TYPE of NODE."
+      (condition-case nil
+          (file-name-nondirectory
+           (directory-file-name
+            (file-name-directory
+             (file-relative-name (org-roam-node-file node) org-roam-directory))))
+        (error "")))
+    (cl-defmethod org-roam-node-filetitle ((node org-roam-node))
+      "Return the value of \"#+title:\" (if any) from file that NODE resides in.
       If there's no file-level title in the file, return empty string."
-        (or (if (= (org-roam-node-level node) 0)
-                (org-roam-node-title node)
-              (org-roam-get-keyword "TITLE" (org-roam-node-file node)))
-            ""))
-      (cl-defmethod org-roam-node-hierarchy ((node org-roam-node))
-        "Return hierarchy for NODE, constructed of its file title, OLP and direct title.
+      (or (if (= (org-roam-node-level node) 0)
+              (org-roam-node-title node)
+            (org-roam-get-keyword "TITLE" (org-roam-node-file node)))
+          ""))
+    (cl-defmethod org-roam-node-hierarchy ((node org-roam-node))
+      "Return hierarchy for NODE, constructed of its file title, OLP and direct title.
         If some elements are missing, they will be stripped out."
-        (let ((title     (org-roam-node-title node))
-              (olp       (org-roam-node-olp   node))
-              (level     (org-roam-node-level node))
-              (filetitle (org-roam-node-filetitle node))
-              (separator (propertize " > " 'face 'shadow)))
-          (cl-case level
-            ;; node is a top-level file
-            (0 filetitle)
-            ;; node is a level 1 heading
-            (1 (concat (propertize filetitle 'face '(shadow italic))
-                       separator title))
-            ;; node is a heading with an arbitrary outline path
-            (t (concat (propertize filetitle 'face '(shadow italic))
-                       separator (propertize (string-join olp " > ") 'face '(shadow italic))
-                       separator title)))))
-
-      (setq org-roam-node-display-template (concat "${type:15} ${hierarchy:100} " (propertize "${tags:*}" 'face 'org-tag)))
-  )
-
+      (let ((title     (org-roam-node-title node))
+            (olp       (org-roam-node-olp   node))
+            (level     (org-roam-node-level node))
+            (filetitle (org-roam-node-filetitle node))
+            (separator (propertize " > " 'face 'shadow)))
+        (cl-case level
+          ;; node is a top-level file
+          (0 filetitle)
+          ;; node is a level 1 heading
+          (1 (concat (propertize filetitle 'face '(shadow italic))
+                     separator title))
+          ;; node is a heading with an arbitrary outline path
+          (t (concat (propertize filetitle 'face '(shadow italic))
+                     separator (propertize (string-join olp " > ") 'face '(shadow italic))
+                     separator title))))))
 #+end_src
 
 ** ox-hugo
 #+begin_src emacs-lisp
   (use-package ox-hugo
-  :ensure t   ;Auto-install the package from Melpa
-  :pin melpa  ;`package-archives' should already have ("melpa" . "https://melpa.org/packages/")
-  :after ox)
+    :ensure t   ;Auto-install the package from Melpa
+    :pin melpa  ;`package-archives' should already have ("melpa" . "https://melpa.org/packages/")
+    :after ox)
 #+end_src
 * Markdown
 *markdown 作为主流，还是和 org-mode 一个待遇吧*
 
 [[https://github.com/jrblevin/markdown-mode][markdown-mode]] 提供 markdown 支持
 #+begin_src emacs-lisp
-(use-package markdown-mode
-  :commands (markdown-mode gfm-mode)
-  :mode (("README\\.md\\'" . gfm-mode)
-         ("\\.md\\'" . markdown-mode)
-         ("\\.markdown\\'" . markdown-mode))
-  :init (setq markdown-command "multimarkdown"))
+  (use-package markdown-mode
+    :commands (markdown-mode gfm-mode)
+    :mode (("README\\.md\\'" . gfm-mode)
+           ("\\.md\\'" . markdown-mode)
+           ("\\.markdown\\'" . markdown-mode))
+    :init (setq markdown-command "multimarkdown"))
 #+end_src
 
 * YAML
 *部分应用会使用 yaml 作为配置文件*
 
 #+begin_src emacs-lisp
-(use-package yaml-mode
-  :mode
-  (("\\.yaml\\'" . yaml-mode)
-   ("\\.yml\\'" . yaml-mode)))
+  (use-package yaml-mode
+    :mode
+    (("\\.yaml\\'" . yaml-mode)
+     ("\\.yml\\'" . yaml-mode)))
 #+end_src
 
 * JSON
 *方便查看 json，方便甩锅*
 
 #+begin_src emacs-lisp
-(use-package json-mode
-  :defer t)
+  (use-package json-mode
+    :defer t)
 #+end_src
 
 * dockerfile
 #+begin_src emacs-lisp
   (use-package dockerfile-mode)
 #+end_src
-* Version Control
+
+* COMMENT Version Control
 [[https://github.com/magit/magit][magit]] emacs 下 git 增强，应该会有用吧。。。
 #+begin_src emacs-lisp
-(use-package magit
-  :bind
-  (("s-k" . magit)
-   :map transient-base-map
-   ("<escape>" . transient-quit-one))
-  :custom
-  (magit-diff-refine-hunk t)
-  (magit-save-repository-buffers 'dontask)
-  ;; Disable ulgy bitmap in fringe in magit mode.
-  (magit-section-visibility-indicator nil)
-  :config
-  ;; https://manuel-uberti.github.io/emacs/2018/02/17/magit-bury-buffer/
-  (evil-define-key 'normal magit-status-mode-map (kbd "q") 'magit-kill-buffers)
+  (use-package magit
+    :bind
+    (("s-k" . magit)
+     :map transient-base-map
+     ("<escape>" . transient-quit-one))
+    :custom
+    (magit-diff-refine-hunk t)
+    (magit-save-repository-buffers 'dontask)
+    ;; Disable ulgy bitmap in fringe in magit mode.
+    (magit-section-visibility-indicator nil)
+    :config
+    ;; https://manuel-uberti.github.io/emacs/2018/02/17/magit-bury-buffer/
+    (evil-define-key 'normal magit-status-mode-map (kbd "q") 'magit-kill-buffers)
 
-  (defun magit-kill-buffers ()
-    "Restore window configuration and kill all Magit buffers."
-    (interactive)
-    (let ((buffers (magit-mode-get-buffers)))
-      (magit-restore-window-configuration)
-      (mapc #'kill-buffer buffers))))
+    (defun magit-kill-buffers ()
+      "Restore window configuration and kill all Magit buffers."
+      (interactive)
+      (let ((buffers (magit-mode-get-buffers)))
+        (magit-restore-window-configuration)
+        (mapc #'kill-buffer buffers))))
 #+end_src
 
 [[https://github.com/magit/git-modes][git-mode]] 方便查看 git 配置文件
-#+begin_src emas-lisp
-(use-package git-modes
-  :defer t)
+#+begin_src emacs-lisp
+  (use-package git-modes)
 #+end_src
 
 * Chinese
@@ -670,7 +694,9 @@ org mode 的插件
 使用拼音首字母搜索
 #+begin_src emacs-lisp
   (use-package pinyinlib)
-    (defun completion--regex-pinyin (str)
+
+  (defun completion--regex-pinyin (str)
     (orderless-regexp (pinyinlib-build-regexp-string str)))
+
   (add-to-list 'orderless-matching-styles 'completion--regex-pinyin)
 #+end_src
