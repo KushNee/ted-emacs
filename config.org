@@ -658,7 +658,7 @@ org mode 的插件
   (use-package dockerfile-mode)
 #+end_src
 
-* COMMENT Version Control
+* Version Control
 [[https://github.com/magit/magit][magit]] emacs 下 git 增强，应该会有用吧。。。
 #+begin_src emacs-lisp
   (use-package magit
