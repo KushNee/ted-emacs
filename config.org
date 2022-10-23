@@ -101,9 +101,16 @@ https://emacs.stackexchange.com/a/20039/19518
                              ("7:00" . doom-one-light)))
     (circadian-setup))
 #+end_src
-[[https://github.com/tarsius/minions][minions]] 更简洁的状态栏
+
+doom-modeline
 #+begin_src emacs-lisp
-  (use-package minions)
+  (use-package doom-modeline
+      :hook (after-init . doom-modeline-mode)
+      :init
+      (setq doom-modeline-time t
+            doom-modeline-time-icon nil
+            doom-modeline-gnus-timer nil
+            doom-modeline-hud t))  
 #+end_src
 
 *** Dired
