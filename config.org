@@ -147,7 +147,7 @@ doom-modeline
      ("N"   . dirvish-narrow)
      ("^"   . dirvish-history-last)
      ("-"   . dired-jump)
-     ("h"   . dirvish-history-jump) ; remapped `describe-mode'
+     ("h"   . dired-up-directory) ; remapped `describe-mode'
      ("s"   . dirvish-quicksort)    ; remapped `dired-sort-toggle-or-edit'
      ("v"   . dirvish-vc-menu)      ; remapped `dired-view-file'
      ("TAB" . dirvish-subtree-toggle)
@@ -290,25 +290,6 @@ corfu 补全框架
     (kind-icon-default-face 'corfu-default)
     :config
     (add-to-list 'corfu-margin-formatters #'kind-icon-margin-formatter))
-#+end_src
-
-#+begin_src emacs-lisp
-  (use-package corfu-doc
-    :bind (:map corfu-map
-                ;; This is a manual toggle for the documentation window.
-                ([remap corfu-show-documentation] . corfu-doc-toggle) ; Remap the default doc command
-                ;; Scroll in the documentation window
-                ("M-n" . corfu-doc-scroll-up)
-                ("M-p" . corfu-doc-scroll-down))
-    :hook (corfu-mode . corfu-doc-mode)
-    :custom
-    (corfu-doc-delay 0.1)
-    (corfu-doc-hide-threshold 10)
-    (corfu-doc-max-width 60)
-    (corfu-doc-max-height 10)
-
-    :config
-    (corfu-doc-mode))
 #+end_src
 
 * Window Management
@@ -520,24 +501,6 @@ org mode 的插件
     :config
     (setq highlight-indent-guides-method 'character)
     (setq highlight-indent-guides-auto-character-face-perc 80))
-#+end_src
-** org todo
-#+begin_src emacs-lisp
-  (setq org-todo-keywords
-        (quote ((sequence "TODO(t)" "DOING(D)" "|" "DONE(d!/!)")
-                (sequence "WAITING(w@/!)" "SOMEDAY(S)" "|" "CANCELLED(c@/!)" "MEETING(m)" "PHONE(p)"))))
-
-  (require 'org-checklist)
-  ;; need repeat task and properties
-  (setq org-log-done t)
-  (setq org-log-into-drawer t)
-#+end_src
-
-** org agenda
-#+begin_src emacs-lisp
-  (setq org-agenda-span 'day)
-  ;; 当 entry 同时设置了 shceduled 和 deadline 时，不到排期时间不会在 agenda 显示
-  (setq org-agenda-skip-deadline-prewarning-if-scheduled 'pre-scheduled)
 #+end_src
 
 ** org capture
